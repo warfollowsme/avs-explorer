@@ -1,0 +1,174 @@
+type Initialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MinWithdrawalDelayBlocksSet @entity(immutable: true) {
+  id: Bytes!
+  previousValue: BigInt! # uint256
+  newValue: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorDetailsModified @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  newOperatorDetails_earningsReceiver: Bytes! # address
+  newOperatorDetails_delegationApprover: Bytes! # address
+  newOperatorDetails_stakerOptOutWindowBlocks: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorMetadataURIUpdated @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  metadataURI: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorRegistered @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  operatorDetails_earningsReceiver: Bytes! # address
+  operatorDetails_delegationApprover: Bytes! # address
+  operatorDetails_stakerOptOutWindowBlocks: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorSharesDecreased @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  staker: Bytes! # address
+  strategy: Bytes! # address
+  shares: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorSharesIncreased @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  staker: Bytes! # address
+  strategy: Bytes! # address
+  shares: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Paused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PauserRegistrySet @entity(immutable: true) {
+  id: Bytes!
+  pauserRegistry: Bytes! # address
+  newPauserRegistry: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StakerDelegated @entity(immutable: true) {
+  id: Bytes!
+  staker: Bytes! # address
+  operator: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StakerForceUndelegated @entity(immutable: true) {
+  id: Bytes!
+  staker: Bytes! # address
+  operator: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StakerUndelegated @entity(immutable: true) {
+  id: Bytes!
+  staker: Bytes! # address
+  operator: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyWithdrawalDelayBlocksSet @entity(immutable: true) {
+  id: Bytes!
+  strategy: Bytes! # address
+  previousValue: BigInt! # uint256
+  newValue: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Unpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type WithdrawalCompleted @entity(immutable: true) {
+  id: Bytes!
+  withdrawalRoot: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type WithdrawalMigrated @entity(immutable: true) {
+  id: Bytes!
+  oldWithdrawalRoot: Bytes! # bytes32
+  newWithdrawalRoot: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type WithdrawalQueued @entity(immutable: true) {
+  id: Bytes!
+  withdrawalRoot: Bytes! # bytes32
+  withdrawal_staker: Bytes! # address
+  withdrawal_delegatedTo: Bytes! # address
+  withdrawal_withdrawer: Bytes! # address
+  withdrawal_nonce: BigInt! # uint256
+  withdrawal_startBlock: BigInt! # uint32
+  withdrawal_strategies: [Bytes!]! # address[]
+  withdrawal_shares: [BigInt!]! # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

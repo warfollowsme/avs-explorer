@@ -1,0 +1,77 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: DelegationManager
+    network: mainnet
+    source:
+      address: "0x1784BE6401339Fc0Fedf7E9379409f5c1BfE9dda"
+      abi: DelegationManager
+      startBlock: 19492759
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Initialized
+        - MinWithdrawalDelayBlocksSet
+        - OperatorDetailsModified
+        - OperatorMetadataURIUpdated
+        - OperatorRegistered
+        - OperatorSharesDecreased
+        - OperatorSharesIncreased
+        - OwnershipTransferred
+        - Paused
+        - PauserRegistrySet
+        - StakerDelegated
+        - StakerForceUndelegated
+        - StakerUndelegated
+        - StrategyWithdrawalDelayBlocksSet
+        - Unpaused
+        - WithdrawalCompleted
+        - WithdrawalMigrated
+        - WithdrawalQueued
+      abis:
+        - name: DelegationManager
+          file: ./abis/DelegationManager.json
+      eventHandlers:
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: MinWithdrawalDelayBlocksSet(uint256,uint256)
+          handler: handleMinWithdrawalDelayBlocksSet
+        - event: OperatorDetailsModified(indexed address,(address,address,uint32))
+          handler: handleOperatorDetailsModified
+        - event: OperatorMetadataURIUpdated(indexed address,string)
+          handler: handleOperatorMetadataURIUpdated
+        - event: OperatorRegistered(indexed address,(address,address,uint32))
+          handler: handleOperatorRegistered
+        - event: OperatorSharesDecreased(indexed address,address,address,uint256)
+          handler: handleOperatorSharesDecreased
+        - event: OperatorSharesIncreased(indexed address,address,address,uint256)
+          handler: handleOperatorSharesIncreased
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(indexed address,uint256)
+          handler: handlePaused
+        - event: PauserRegistrySet(address,address)
+          handler: handlePauserRegistrySet
+        - event: StakerDelegated(indexed address,indexed address)
+          handler: handleStakerDelegated
+        - event: StakerForceUndelegated(indexed address,indexed address)
+          handler: handleStakerForceUndelegated
+        - event: StakerUndelegated(indexed address,indexed address)
+          handler: handleStakerUndelegated
+        - event: StrategyWithdrawalDelayBlocksSet(address,uint256,uint256)
+          handler: handleStrategyWithdrawalDelayBlocksSet
+        - event: Unpaused(indexed address,uint256)
+          handler: handleUnpaused
+        - event: WithdrawalCompleted(bytes32)
+          handler: handleWithdrawalCompleted
+        - event: WithdrawalMigrated(bytes32,bytes32)
+          handler: handleWithdrawalMigrated
+        - event: WithdrawalQueued(bytes32,(address,address,address,uint256,uint32,address[],uint256[]))
+          handler: handleWithdrawalQueued
+      file: ./src/delegation-manager.ts
