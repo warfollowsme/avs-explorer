@@ -1,3 +1,49 @@
+type Operator @entity{
+  id: ID! # address
+  tvl: BigInt! # uint256
+  stakes: [Stake!]! @derivedFrom(field: "operator")
+  avsStatuses: [AVSOperatorStatus!]! @derivedFrom(field: "operator")
+  earningsReceiver: Bytes! # address
+  delegationApprover: Bytes! # address
+  stakerOptOutWindowBlocks: BigInt! # uint32
+  metadataURI: String! # string
+}
+
+type Stake @entity{
+  #staker-operator-strategy
+  id: ID!  
+  operator: Operator!
+  staker: Staker! # address
+  strategy: Strategy!
+  shares: BigInt! # uint256
+}
+
+type Staker @entity{
+  id: ID!  # address
+  stakes: [Stake!]! @derivedFrom(field: "staker")
+}
+
+type Strategy @entity{
+  id: ID!  # address
+  withdrawalDelayBlocks: BigInt! # uint256
+  whitelisted: Boolean! #status
+  stakes: [Stake!]! @derivedFrom(field: "strategy")
+}
+
+type AVS @entity{
+  id: ID!
+  metadataURI: String! # string
+  registrations: [AVSOperatorStatus!]! @derivedFrom(field: "avs") 
+}
+
+type AVSOperatorStatus @entity{
+  #avs-operator
+  id: ID!
+  avs: AVS!
+  operator: Operator!
+  status: Int! # uint8
+}
+
 type Initialized @entity(immutable: true) {
   id: Bytes!
   version: Int! # uint8
@@ -168,6 +214,346 @@ type WithdrawalQueued @entity(immutable: true) {
   withdrawal_startBlock: BigInt! # uint32
   withdrawal_strategies: [Bytes!]! # address[]
   withdrawal_shares: [BigInt!]! # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Deposit @entity(immutable: true) {
+  id: Bytes!
+  staker: Bytes! # address
+  token: Bytes! # address
+  strategy: Bytes! # address
+  shares: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyManagerInitialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyManagerOwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyManagerPaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyManagerPauserRegistrySet @entity(immutable: true) {
+  id: Bytes!
+  pauserRegistry: Bytes! # address
+  newPauserRegistry: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyAddedToDepositWhitelist @entity(immutable: true) {
+  id: Bytes!
+  strategy: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyRemovedFromDepositWhitelist @entity(immutable: true) {
+  id: Bytes!
+  strategy: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyWhitelisterChanged @entity(immutable: true) {
+  id: Bytes!
+  previousAddress: Bytes! # address
+  newAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type StrategyManagerUnpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdatedThirdPartyTransfersForbidden @entity(immutable: true) {
+  id: Bytes!
+  strategy: Bytes! # address
+  value: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+type BeaconChainETHDeposited @entity(immutable: true) {
+  id: Bytes!
+  podOwner: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BeaconChainETHWithdrawalCompleted @entity(immutable: true) {
+  id: Bytes!
+  podOwner: Bytes! # address
+  shares: BigInt! # uint256
+  nonce: BigInt! # uint96
+  delegatedAddress: Bytes! # address
+  withdrawer: Bytes! # address
+  withdrawalRoot: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BeaconOracleUpdated @entity(immutable: true) {
+  id: Bytes!
+  newOracleAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DenebForkTimestampUpdated @entity(immutable: true) {
+  id: Bytes!
+  newValue: BigInt! # uint64
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EigenPodManagerInitialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EigenPodManagerOwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EigenPodManagerPaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EigenPodManagerPauserRegistrySet @entity(immutable: true) {
+  id: Bytes!
+  pauserRegistry: Bytes! # address
+  newPauserRegistry: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PodDeployed @entity(immutable: true) {
+  id: Bytes!
+  eigenPod: Bytes! # address
+  podOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PodSharesUpdated @entity(immutable: true) {
+  id: Bytes!
+  podOwner: Bytes! # address
+  sharesDelta: BigInt! # int256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EigenPodManagerUnpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+type AVSMetadataURIUpdated @entity(immutable: true) {
+  id: Bytes!
+  avs: Bytes! # address
+  metadataURI: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AVSDirectoryInitialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorAVSRegistrationStatusUpdated @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  avs: Bytes! # address
+  status: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AVSDirectoryOwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AVSDirectoryPaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AVSDirectoryPauserRegistrySet @entity(immutable: true) {
+  id: Bytes!
+  pauserRegistry: Bytes! # address
+  newPauserRegistry: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AVSDirectoryUnpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+type FrozenStatusReset @entity(immutable: true) {
+  id: Bytes!
+  previouslySlashedAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SlasherInitialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MiddlewareTimesAdded @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  index: BigInt! # uint256
+  stalestUpdateBlock: BigInt! # uint32
+  latestServeUntilBlock: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OperatorFrozen @entity(immutable: true) {
+  id: Bytes!
+  slashedOperator: Bytes! # address
+  slashingContract: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OptedIntoSlashing @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SlasherOwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SlasherPaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SlasherPauserRegistrySet @entity(immutable: true) {
+  id: Bytes!
+  pauserRegistry: Bytes! # address
+  newPauserRegistry: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SlashingAbilityRevoked @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes! # address
+  contractAddress: Bytes! # address
+  contractCanSlashOperatorUntilBlock: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SlasherUnpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  newPausedStatus: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

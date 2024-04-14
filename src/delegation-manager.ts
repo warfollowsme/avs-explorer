@@ -36,8 +36,15 @@ import {
   Unpaused,
   WithdrawalCompleted,
   WithdrawalMigrated,
-  WithdrawalQueued
+  WithdrawalQueued,
+  Operator,
+  Staker,
+  Stake,
+  Strategy
 } from "../generated/schema"
+import {
+  BigInt
+} from "@graphprotocol/graph-ts";
 
 export function handleInitialized(event: InitializedEvent): void {
   let entity = new Initialized(
@@ -87,6 +94,16 @@ export function handleOperatorDetailsModified(
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const operatorId = event.params.operator.toHexString()
+  let operator = Operator.load(operatorId)
+  if(operator == null){
+    operator = new Operator(operatorId)    
+  }
+  operator.earningsReceiver = event.params.newOperatorDetails.earningsReceiver
+  operator.delegationApprover = event.params.newOperatorDetails.delegationApprover
+  operator.stakerOptOutWindowBlocks = event.params.newOperatorDetails.stakerOptOutWindowBlocks
+  operator.save()
 }
 
 export function handleOperatorMetadataURIUpdated(
@@ -103,6 +120,14 @@ export function handleOperatorMetadataURIUpdated(
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const operatorId = event.params.operator.toHexString()
+  let operator = Operator.load(operatorId)
+  if(operator == null){
+    operator = new Operator(operatorId)    
+  }
+  operator.metadataURI = event.params.metadataURI
+  operator.save()
 }
 
 export function handleOperatorRegistered(event: OperatorRegisteredEvent): void {
@@ -122,6 +147,16 @@ export function handleOperatorRegistered(event: OperatorRegisteredEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const operatorId = event.params.operator.toHexString()
+  let operator = Operator.load(operatorId)
+  if(operator == null){
+    operator = new Operator(operatorId)    
+  }
+  operator.earningsReceiver = event.params.operatorDetails.earningsReceiver
+  operator.delegationApprover = event.params.operatorDetails.delegationApprover
+  operator.stakerOptOutWindowBlocks = event.params.operatorDetails.stakerOptOutWindowBlocks
+  operator.save()
 }
 
 export function handleOperatorSharesDecreased(
@@ -140,6 +175,20 @@ export function handleOperatorSharesDecreased(
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const operatorId = event.params.operator.toHexString()
+  const stakerId = event.params.staker.toHexString()
+  const strategyId = event.params.strategy.toHexString()
+  let stake = Stake.load(`${stakerId}-${operatorId}-${strategyId}`)
+  if(stake == null){
+    stake = new Stake(`${stakerId}-${operatorId}-${strategyId}`)
+    stake.staker = stakerId
+    stake.operator = operatorId
+    stake.strategy = strategyId
+    stake.shares = BigInt.fromI32(0)
+  }
+  stake.shares.minus(event.params.shares)
+  stake.save()
 }
 
 export function handleOperatorSharesIncreased(
@@ -158,6 +207,20 @@ export function handleOperatorSharesIncreased(
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const operatorId = event.params.operator.toHexString()
+  const stakerId = event.params.staker.toHexString()
+  const strategyId = event.params.strategy.toHexString()
+  let stake = Stake.load(`${stakerId}-${operatorId}-${strategyId}`)
+  if(stake == null){
+    stake = new Stake(`${stakerId}-${operatorId}-${strategyId}`)
+    stake.staker = stakerId
+    stake.operator = operatorId
+    stake.strategy = strategyId
+    stake.shares = BigInt.fromI32(0)
+  }
+  stake.shares.plus(event.params.shares)
+  stake.save()
 }
 
 export function handleOwnershipTransferred(
@@ -216,6 +279,13 @@ export function handleStakerDelegated(event: StakerDelegatedEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const stakerId =  event.params.staker.toHexString()
+  let staker = Staker.load(stakerId)
+  if(staker == null){
+    staker = new Staker(stakerId)
+  }
+  staker.save()
 }
 
 export function handleStakerForceUndelegated(
@@ -263,6 +333,14 @@ export function handleStrategyWithdrawalDelayBlocksSet(
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  const strategyId = event.params.strategy.toHexString()
+  let strategy = Strategy.load(strategyId)
+  if(strategy == null){
+    strategy = new Strategy(strategyId)
+  }
+  strategy.withdrawalDelayBlocks = event.params.newValue
+  strategy.save()
 }
 
 export function handleUnpaused(event: UnpausedEvent): void {

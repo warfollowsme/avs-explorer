@@ -8,7 +8,7 @@ dataSources:
     name: DelegationManager
     network: mainnet
     source:
-      address: "0x1784BE6401339Fc0Fedf7E9379409f5c1BfE9dda"
+      address: "0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A"
       abi: DelegationManager
       startBlock: 19492759
     mapping:
@@ -34,6 +34,10 @@ dataSources:
         - WithdrawalCompleted
         - WithdrawalMigrated
         - WithdrawalQueued
+        - Operator
+        - Staker
+        - Strategy
+        - Stake
       abis:
         - name: DelegationManager
           file: ./abis/DelegationManager.json
@@ -75,3 +79,190 @@ dataSources:
         - event: WithdrawalQueued(bytes32,(address,address,address,uint256,uint32,address[],uint256[]))
           handler: handleWithdrawalQueued
       file: ./src/delegation-manager.ts
+  - kind: ethereum
+    name: StrategyManager
+    network: mainnet
+    source:
+      address: "0x858646372CC42E1A627fcE94aa7A7033e7CF075A"
+      abi: StrategyManager
+      startBlock: 19492759
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+        - Deposit
+        - StrategyManagerInitialized
+        - StrategyManagerOwnershipTransferred
+        - StrategyManagerPaused
+        - StrategyManagerPauserRegistrySet
+        - StrategyAddedToDepositWhitelist
+        - StrategyRemovedFromDepositWhitelist
+        - StrategyWhitelisterChanged
+        - StrategyManagerUnpaused
+        - UpdatedThirdPartyTransfersForbidden
+      abis:
+        - name: StrategyManager
+          file: ./abis/StrategyManager.json
+      eventHandlers:
+        - event: Deposit(address,address,address,uint256)
+          handler: handleDeposit
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(indexed address,uint256)
+          handler: handlePaused
+        - event: PauserRegistrySet(address,address)
+          handler: handlePauserRegistrySet
+        - event: StrategyAddedToDepositWhitelist(address)
+          handler: handleStrategyAddedToDepositWhitelist
+        - event: StrategyRemovedFromDepositWhitelist(address)
+          handler: handleStrategyRemovedFromDepositWhitelist
+        - event: StrategyWhitelisterChanged(address,address)
+          handler: handleStrategyWhitelisterChanged
+        - event: Unpaused(indexed address,uint256)
+          handler: handleUnpaused
+        - event: UpdatedThirdPartyTransfersForbidden(address,bool)
+          handler: handleUpdatedThirdPartyTransfersForbidden
+      file: ./src/strategy-manager.ts
+  - kind: ethereum
+    name: EigenPodManager
+    network: mainnet
+    source:
+      address: "0x91E677b07F7AF907ec9a428aafA9fc14a0d3A338"
+      abi: EigenPodManager
+      startBlock: 19492759
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - BeaconChainETHDeposited
+        - BeaconChainETHWithdrawalCompleted
+        - BeaconOracleUpdated
+        - DenebForkTimestampUpdated
+        - EigenPodManagerInitialized
+        - EigenPodManagerOwnershipTransferred
+        - EigenPodManagerPaused
+        - EigenPodManagerPauserRegistrySet
+        - PodDeployed
+        - PodSharesUpdated
+        - EigenPodManagerUnpaused
+      abis:
+        - name: EigenPodManager
+          file: ./abis/EigenPodManager.json
+      eventHandlers:
+        - event: BeaconChainETHDeposited(indexed address,uint256)
+          handler: handleBeaconChainETHDeposited
+        - event: BeaconChainETHWithdrawalCompleted(indexed
+            address,uint256,uint96,address,address,bytes32)
+          handler: handleBeaconChainETHWithdrawalCompleted
+        - event: BeaconOracleUpdated(indexed address)
+          handler: handleBeaconOracleUpdated
+        - event: DenebForkTimestampUpdated(uint64)
+          handler: handleDenebForkTimestampUpdated
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(indexed address,uint256)
+          handler: handlePaused
+        - event: PauserRegistrySet(address,address)
+          handler: handlePauserRegistrySet
+        - event: PodDeployed(indexed address,indexed address)
+          handler: handlePodDeployed
+        - event: PodSharesUpdated(indexed address,int256)
+          handler: handlePodSharesUpdated
+        - event: Unpaused(indexed address,uint256)
+          handler: handleUnpaused
+      file: ./src/eigen-pod-manager.ts
+  - kind: ethereum
+    name: AVSDirectory
+    network: mainnet
+    source:
+      address: "0x135dda560e946695d6f155dacafc6f1f25c1f5af"
+      abi: AVSDirectory
+      startBlock: 19492759
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AVS
+        - Operator
+        - AVSOperatorStatus
+        - AVSMetadataURIUpdated
+        - AVSDirectoryInitialized
+        - OperatorAVSRegistrationStatusUpdated
+        - AVSDirectoryOwnershipTransferred
+        - AVSDirectoryPaused
+        - AVSDirectoryPauserRegistrySet
+        - AVSDirectoryUnpaused
+      abis:
+        - name: AVSDirectory
+          file: ./abis/AVSDirectory.json
+      eventHandlers:
+        - event: AVSMetadataURIUpdated(indexed address,string)
+          handler: handleAVSMetadataURIUpdated
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OperatorAVSRegistrationStatusUpdated(indexed address,indexed address,uint8)
+          handler: handleOperatorAVSRegistrationStatusUpdated
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(indexed address,uint256)
+          handler: handlePaused
+        - event: PauserRegistrySet(address,address)
+          handler: handlePauserRegistrySet
+        - event: Unpaused(indexed address,uint256)
+          handler: handleUnpaused
+      file: ./src/avs-directory.ts
+  - kind: ethereum
+    name: Slasher
+    network: mainnet
+    source:
+      address: "0xD92145c07f8Ed1D392c1B88017934E301CC1c3Cd"
+      abi: Slasher
+      startBlock: 19492759
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - FrozenStatusReset
+        - SlasherInitialized
+        - MiddlewareTimesAdded
+        - OperatorFrozen
+        - OptedIntoSlashing
+        - SlasherOwnershipTransferred
+        - SlasherPaused
+        - SlasherPauserRegistrySet
+        - SlashingAbilityRevoked
+        - SlasherUnpaused
+      abis:
+        - name: Slasher
+          file: ./abis/Slasher.json
+      eventHandlers:
+        - event: FrozenStatusReset(indexed address)
+          handler: handleFrozenStatusReset
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: MiddlewareTimesAdded(address,uint256,uint32,uint32)
+          handler: handleMiddlewareTimesAdded
+        - event: OperatorFrozen(indexed address,indexed address)
+          handler: handleOperatorFrozen
+        - event: OptedIntoSlashing(indexed address,indexed address)
+          handler: handleOptedIntoSlashing
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(indexed address,uint256)
+          handler: handlePaused
+        - event: PauserRegistrySet(address,address)
+          handler: handlePauserRegistrySet
+        - event: SlashingAbilityRevoked(indexed address,indexed address,uint32)
+          handler: handleSlashingAbilityRevoked
+        - event: Unpaused(indexed address,uint256)
+          handler: handleUnpaused
+      file: ./src/slasher.ts

@@ -1,8 +1,20 @@
 {
   "mainnet": {
     "DelegationManager": {
-      "address": "0x1784BE6401339Fc0Fedf7E9379409f5c1BfE9dda",
+      "address": "0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A",
       "startBlock": 19492759
+    },
+    "StrategyManager": {
+      "address": "0x858646372CC42E1A627fcE94aa7A7033e7CF075A"
+    },
+    "EigenPodManager": {
+      "address": "0x91E677b07F7AF907ec9a428aafA9fc14a0d3A338"
+    },
+    "AVSDirectory": {
+      "address": "0x135dda560e946695d6f155dacafc6f1f25c1f5af"
+    },
+    "Slasher": {
+      "address": "0xD92145c07f8Ed1D392c1B88017934E301CC1c3Cd"
     }
   }
 }
