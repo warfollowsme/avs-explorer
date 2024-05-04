@@ -10,7 +10,7 @@ dataSources:
     source:
       address: "0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A"
       abi: DelegationManager
-      startBlock: 19492759
+      startBlock: 17445563
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -85,7 +85,7 @@ dataSources:
     source:
       address: "0x858646372CC42E1A627fcE94aa7A7033e7CF075A"
       abi: StrategyManager
-      startBlock: 19492759
+      startBlock: 17453047
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -105,6 +105,10 @@ dataSources:
       abis:
         - name: StrategyManager
           file: ./abis/StrategyManager.json
+        - name: StrategyBase
+          file: ./abis/StrategyBase.json
+        - name: UnderlyingToken
+          file: ./abis/UnderlyingToken.json
       eventHandlers:
         - event: Deposit(address,address,address,uint256)
           handler: handleDeposit
@@ -133,7 +137,7 @@ dataSources:
     source:
       address: "0x91E677b07F7AF907ec9a428aafA9fc14a0d3A338"
       abi: EigenPodManager
-      startBlock: 19492759
+      startBlock: 17445564
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -225,7 +229,7 @@ dataSources:
     source:
       address: "0xD92145c07f8Ed1D392c1B88017934E301CC1c3Cd"
       abi: Slasher
-      startBlock: 19492759
+      startBlock: 17445564
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

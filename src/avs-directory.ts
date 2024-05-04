@@ -17,6 +17,7 @@ import {
   Unpaused,
   AVS,
   Operator,
+  OperatorAction,
   AVSOperatorStatus
 } from "../generated/schema"
 
@@ -76,10 +77,6 @@ export function handleOperatorAVSRegistrationStatusUpdated(
 
   const operatorId = event.params.operator.toHexString()
   const avsId = event.params.avs.toHexString()
-  let operator = Operator.load(operatorId)
-  if(operator == null){
-    operator = new Operator(operatorId)
-  }
   let avsStatus = AVSOperatorStatus.load(`${avsId}-${operatorId}`)
   if(avsStatus == null){
     avsStatus = new AVSOperatorStatus(`${avsId}-${operatorId}`)
@@ -88,6 +85,16 @@ export function handleOperatorAVSRegistrationStatusUpdated(
   }
   avsStatus.status = event.params.status
   avsStatus.save()
+
+  let action = new OperatorAction(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  action.operator = operatorId
+  action.type = "AVSRegistrationStatusUpdated"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  action.save()
 }
 
 export function handleOwnershipTransferred(

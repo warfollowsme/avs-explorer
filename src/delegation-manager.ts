@@ -38,13 +38,20 @@ import {
   WithdrawalMigrated,
   WithdrawalQueued,
   Operator,
+  OperatorAction,
   Staker,
-  Stake,
+  Delegation,
   Strategy
 } from "../generated/schema"
 import {
   BigInt
 } from "@graphprotocol/graph-ts";
+import {
+  createOrLoadEigenLayer,
+  createOrLoadStrategy,
+  createOrLoadOperator,
+  createOrLoadStaker
+} from "./utils/helper"
 
 export function handleInitialized(event: InitializedEvent): void {
   let entity = new Initialized(
@@ -96,14 +103,21 @@ export function handleOperatorDetailsModified(
   entity.save()
 
   const operatorId = event.params.operator.toHexString()
-  let operator = Operator.load(operatorId)
-  if(operator == null){
-    operator = new Operator(operatorId)    
-  }
+  let operator = createOrLoadOperator(operatorId)
   operator.earningsReceiver = event.params.newOperatorDetails.earningsReceiver
   operator.delegationApprover = event.params.newOperatorDetails.delegationApprover
   operator.stakerOptOutWindowBlocks = event.params.newOperatorDetails.stakerOptOutWindowBlocks
   operator.save()
+
+  let action = new OperatorAction(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  action.operator = operatorId
+  action.type = "DetailsModified"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  action.save()
 }
 
 export function handleOperatorMetadataURIUpdated(
@@ -122,12 +136,19 @@ export function handleOperatorMetadataURIUpdated(
   entity.save()
 
   const operatorId = event.params.operator.toHexString()
-  let operator = Operator.load(operatorId)
-  if(operator == null){
-    operator = new Operator(operatorId)    
-  }
+  let operator = createOrLoadOperator(operatorId)
   operator.metadataURI = event.params.metadataURI
   operator.save()
+
+  let action = new OperatorAction(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  action.operator = operatorId
+  action.type = "MetadataURIUpdated"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  action.save()
 }
 
 export function handleOperatorRegistered(event: OperatorRegisteredEvent): void {
@@ -149,14 +170,21 @@ export function handleOperatorRegistered(event: OperatorRegisteredEvent): void {
   entity.save()
 
   const operatorId = event.params.operator.toHexString()
-  let operator = Operator.load(operatorId)
-  if(operator == null){
-    operator = new Operator(operatorId)    
-  }
+  let operator = createOrLoadOperator(operatorId)
   operator.earningsReceiver = event.params.operatorDetails.earningsReceiver
   operator.delegationApprover = event.params.operatorDetails.delegationApprover
   operator.stakerOptOutWindowBlocks = event.params.operatorDetails.stakerOptOutWindowBlocks
   operator.save()
+
+  let action = new OperatorAction(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  action.operator = operatorId
+  action.type = "Registered"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  action.save()
 }
 
 export function handleOperatorSharesDecreased(
@@ -179,16 +207,20 @@ export function handleOperatorSharesDecreased(
   const operatorId = event.params.operator.toHexString()
   const stakerId = event.params.staker.toHexString()
   const strategyId = event.params.strategy.toHexString()
-  let stake = Stake.load(`${stakerId}-${operatorId}-${strategyId}`)
-  if(stake == null){
-    stake = new Stake(`${stakerId}-${operatorId}-${strategyId}`)
-    stake.staker = stakerId
-    stake.operator = operatorId
-    stake.strategy = strategyId
-    stake.shares = BigInt.fromI32(0)
+  let delegation = Delegation.load(`${stakerId}-${operatorId}-${strategyId}`)
+  if(delegation == null){
+    delegation = new Delegation(`${stakerId}-${operatorId}-${strategyId}`)
+    delegation.staker = stakerId
+    delegation.operator = operatorId
+    delegation.strategy = strategyId
+    delegation.shares = BigInt.fromI32(0)
   }
-  stake.shares.minus(event.params.shares)
-  stake.save()
+  delegation.shares.minus(event.params.shares)
+  delegation.save()
+
+  let strategy = createOrLoadStrategy(strategyId)
+  strategy.whitelisted = true
+  strategy.save()
 }
 
 export function handleOperatorSharesIncreased(
@@ -211,16 +243,20 @@ export function handleOperatorSharesIncreased(
   const operatorId = event.params.operator.toHexString()
   const stakerId = event.params.staker.toHexString()
   const strategyId = event.params.strategy.toHexString()
-  let stake = Stake.load(`${stakerId}-${operatorId}-${strategyId}`)
-  if(stake == null){
-    stake = new Stake(`${stakerId}-${operatorId}-${strategyId}`)
-    stake.staker = stakerId
-    stake.operator = operatorId
-    stake.strategy = strategyId
-    stake.shares = BigInt.fromI32(0)
+  let delegation = Delegation.load(`${stakerId}-${operatorId}-${strategyId}`)
+  if(delegation == null){
+    delegation = new Delegation(`${stakerId}-${operatorId}-${strategyId}`)
+    delegation.staker = stakerId
+    delegation.operator = operatorId
+    delegation.strategy = strategyId
+    delegation.shares = BigInt.fromI32(0)
   }
-  stake.shares.plus(event.params.shares)
-  stake.save()
+  delegation.shares.plus(event.params.shares)
+  delegation.save()
+
+  let strategy = createOrLoadStrategy(strategyId)
+  strategy.whitelisted = true
+  strategy.save()
 }
 
 export function handleOwnershipTransferred(
@@ -281,10 +317,7 @@ export function handleStakerDelegated(event: StakerDelegatedEvent): void {
   entity.save()
 
   const stakerId =  event.params.staker.toHexString()
-  let staker = Staker.load(stakerId)
-  if(staker == null){
-    staker = new Staker(stakerId)
-  }
+  let staker = createOrLoadStaker(stakerId)
   staker.save()
 }
 
@@ -335,10 +368,7 @@ export function handleStrategyWithdrawalDelayBlocksSet(
   entity.save()
 
   const strategyId = event.params.strategy.toHexString()
-  let strategy = Strategy.load(strategyId)
-  if(strategy == null){
-    strategy = new Strategy(strategyId)
-  }
+  let strategy = createOrLoadStrategy(strategyId)
   strategy.withdrawalDelayBlocks = event.params.newValue
   strategy.save()
 }
@@ -396,7 +426,7 @@ export function handleWithdrawalQueued(event: WithdrawalQueuedEvent): void {
   entity.withdrawal_withdrawer = event.params.withdrawal.withdrawer
   entity.withdrawal_nonce = event.params.withdrawal.nonce
   entity.withdrawal_startBlock = event.params.withdrawal.startBlock
-  entity.withdrawal_strategies = event.params.withdrawal.strategies
+  entity.withdrawal_strategies = event.params.withdrawal.strategies.map<string>(s => s.toHexString())
   entity.withdrawal_shares = event.params.withdrawal.shares
 
   entity.blockNumber = event.block.number

@@ -24,6 +24,7 @@ import {
   Unpaused,
   UpdatedThirdPartyTransfersForbidden,
 } from "../generated/schema"
+import { createOrLoadStrategy } from "./utils/helper"
 
 export function handleDeposit(event: DepositEvent): void {
   let entity = new Deposit(
@@ -113,12 +114,9 @@ export function handleStrategyAddedToDepositWhitelist(
   entity.save()
 
   const strategyId = event.params.strategy.toHexString()
-  let strategy = Strategy.load(strategyId)
-  if(strategy == null){
-    strategy = new Strategy(strategyId)
-    strategy.withdrawalDelayBlocks = BigInt.fromI32(0)
-  }
+  let strategy = createOrLoadStrategy(strategyId)
   strategy.whitelisted = true
+  strategy.save()
 }
 
 export function handleStrategyRemovedFromDepositWhitelist(
@@ -136,12 +134,9 @@ export function handleStrategyRemovedFromDepositWhitelist(
   entity.save()
 
   const strategyId = event.params.strategy.toHexString()
-  let strategy = Strategy.load(strategyId)
-  if(strategy == null){
-    strategy = new Strategy(strategyId)
-    strategy.withdrawalDelayBlocks = BigInt.fromI32(0)
-  }
+  let strategy = createOrLoadStrategy(strategyId)
   strategy.whitelisted = false
+  strategy.save()
 }
 
 export function handleStrategyWhitelisterChanged(
