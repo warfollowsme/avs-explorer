@@ -227,7 +227,7 @@ export function handleOperatorSharesDecreased(
     event.transaction.hash,
     event.block.timestamp
   )
-  delegation.shares.minus(event.params.shares)
+  delegation.shares = delegation.shares.minus(event.params.shares)
   delegation.lastUpdatedTimestamp = event.block.timestamp
   delegation.lastUpdatedTransactionHash = event.transaction.hash
   delegation.save()
@@ -266,7 +266,7 @@ export function handleOperatorSharesIncreased(
     event.transaction.hash,
     event.block.timestamp
   )
-  delegation.shares.plus(event.params.shares)
+  delegation.shares = delegation.shares.plus(event.params.shares)  
   delegation.lastUpdatedTimestamp = event.block.timestamp
   delegation.lastUpdatedTransactionHash = event.transaction.hash
   delegation.save()
