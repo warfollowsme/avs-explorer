@@ -15,11 +15,11 @@ import {
   Paused,
   PauserRegistrySet,
   Unpaused,
-  AVS,
-  Operator,
   OperatorAction,
-  AVSOperatorStatus
+  AVSOperatorStatus,
+  AVSAction
 } from "../generated/schema"
+import { createOrLoadAVS, createOrLoadOperator } from "./utils/helper"
 
 export function handleAVSMetadataURIUpdated(
   event: AVSMetadataURIUpdatedEvent,
@@ -36,13 +36,19 @@ export function handleAVSMetadataURIUpdated(
 
   entity.save()
 
-  const avsId = event.params.avs.toHexString()
-  let avsEntity = AVS.load(avsId)
-  if (avsEntity == null) {
-    avsEntity = new AVS(avsId)
-  }
+  let avsEntity = createOrLoadAVS(event.params.avs, event.transaction.hash, event.block.timestamp)
   avsEntity.metadataURI = event.params.metadataURI
+  avsEntity.actionsCount = avsEntity.actionsCount + 1
   avsEntity.save()
+
+  let action = new AVSAction(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  action.avs = event.params.avs
+  action.type = "MetadataURIUpdated"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  action.metadataURI = event.params.metadataURI
+  action.save()
 }
 
 export function handleInitialized(event: InitializedEvent): void {
@@ -75,16 +81,32 @@ export function handleOperatorAVSRegistrationStatusUpdated(
 
   entity.save()
 
-  const operatorId = event.params.operator.toHexString()
-  const avsId = event.params.avs.toHexString()
-  let avsStatus = AVSOperatorStatus.load(`${avsId}-${operatorId}`)
-  if(avsStatus == null){
-    avsStatus = new AVSOperatorStatus(`${avsId}-${operatorId}`)
+  const operatorId = event.params.operator
+  const avsId = event.params.avs
+
+  let operator = createOrLoadOperator(operatorId, event.transaction.hash, event.block.timestamp)
+  operator.statusesCount = operator.statusesCount + 1
+
+  let avsEntity = createOrLoadAVS(avsId, event.transaction.hash, event.block.timestamp)
+  avsEntity.actionsCount = avsEntity.actionsCount + 1
+
+  let avsStatus = AVSOperatorStatus.load(avsId.concat(operatorId))
+  if (avsStatus == null) {
+    avsStatus = new AVSOperatorStatus(avsId.concat(operatorId))
     avsStatus.avs = avsId
-    avsStatus.operator = operatorId
+    avsStatus.operator = operatorId   
+    avsStatus.registeredTransactionHash = event.transaction.hash
+    avsStatus.registeredTimestamp = event.block.timestamp
+    
+    operator.actionsCount = operator.actionsCount + 1
+    avsEntity.registrationsCount = avsEntity.registrationsCount + 1
   }
+  avsStatus.lastUpdatedTransactionHash = event.transaction.hash
+  avsStatus.lastUpdatedTimestamp = event.block.timestamp
   avsStatus.status = event.params.status
   avsStatus.save()
+  operator.save()
+  avsEntity.save()
 
   let action = new OperatorAction(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -94,7 +116,22 @@ export function handleOperatorAVSRegistrationStatusUpdated(
   action.blockNumber = event.block.number
   action.blockTimestamp = event.block.timestamp
   action.transactionHash = event.transaction.hash
+  action.avs = avsId
+  action.status = event.params.status
   action.save()
+
+
+  let avsAction = new AVSAction(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  avsAction.avs = avsId
+  if (event.params.status == 1)
+    avsAction.type = "OperatorAdded"
+  else if (event.params.status == 0)
+    avsAction.type = "OperatorRemoved"
+  avsAction.blockNumber = event.block.number
+  avsAction.blockTimestamp = event.block.timestamp
+  avsAction.transactionHash = event.transaction.hash
+  avsAction.operator = operatorId
+  avsAction.save()
 }
 
 export function handleOwnershipTransferred(

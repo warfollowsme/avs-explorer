@@ -1,9 +1,5 @@
 type EigenLayer @entity {
   id: ID!
-  totalStaked: BigInt!
-  totalDeposit: BigInt!
-  totalWithdrawals: BigInt!
-  totalDelegated: BigInt!
   operatorsCount: Int!
   avsCount: Int!
   stakersCount: Int!
@@ -16,9 +12,97 @@ type EigenLayer @entity {
   slasher: Bytes!
 }
 
+type Strategy @entity{
+  id: Bytes!  # address
+  withdrawalDelayBlocks: BigInt # uint256
+  whitelisted: Boolean! #status
+  totalShares: BigInt!
+  totalDelegated: BigInt!
+  totalWithdrawing: BigInt!
+  stakesCount: Int!
+  stakes: [StrategyDeposit!]! @derivedFrom(field: "strategy")
+  delegationsCount: Int!
+  delegations: [Delegation!]! @derivedFrom(field: "strategy")
+  withdrawalsCount: Int!
+  withdrawals: [WithdrawalStrategy!]! @derivedFrom(field: "strategy")
+  underlyingToken: Bytes
+  name: String!
+  tokenSymbol: String!
+  tokenDecimals: Int!
+}
+
+type Staker @entity{
+  id: Bytes!  # address
+  delegatedTo: Bytes
+  stakesCount: Int!
+  delegationsCount: Int!
+  actionsCount: Int!
+  withdrawalsCount: Int!
+  stakes: [StrategyDeposit!]! @derivedFrom(field: "depositor")
+  delegations: [Delegation!]! @derivedFrom(field: "staker")
+  actions: [StakerAction!]! @derivedFrom(field: "staker")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "staker")
+}
+
+type StrategyDeposit @entity{
+  #staker+strategy
+  id: Bytes!
+  depositor: Staker! # address
+  strategy: Strategy!
+  withdrawal: WithdrawalStrategy
+  shares: BigInt! # uint
+  createdTimestamp: BigInt!
+  createdTransactionHash: Bytes!
+  lastUpdatedTimestamp: BigInt!
+  lastUpdatedTransactionHash: Bytes!
+}
+
+# type InternalWithdrawal @entity{
+#   #staker+nounce
+#   id: ID!
+#   staker: Staker!
+#   nonce: BigInt!
+#   strategy: Strategy
+#   shares: BigInt # uint
+#   withdrawal: WithdrawalStrategy
+# }
+
+type Withdrawal @entity {
+  id: Bytes! #root
+  staker: Staker!
+  root: Bytes
+  strategies: [WithdrawalStrategy!]! @derivedFrom(field: "withdrawal")
+  #internalWithdrawal: InternalWithdrawal
+  newWithdrawal: Withdrawal
+  oldWithdrawal: Withdrawal
+  queuedBlockNumber: BigInt!
+  queuedBlockTimestamp: BigInt!
+  queuedTransactionHash: Bytes!
+  completedBlockNumber: BigInt
+  completedBlockTimestamp: BigInt
+  completedTransactionHash: Bytes
+  migratedBlockNumber: BigInt
+  migratedBlockTimestamp: BigInt
+  migratedTransactionHash: Bytes
+}
+
+type WithdrawalStrategy @entity {
+  #staker+nounce
+  id: ID!
+  staker: Staker!
+  nonce: BigInt!
+  withdrawal: Withdrawal
+  strategy: Strategy
+  share: BigInt
+}
+
 type Operator @entity{
-  id: ID! # address
-  tvl: BigInt! # uint256
+  id: Bytes! # address
+  delegationsCount: Int! #
+  statusesCount: Int! #
+  actionsCount: Int! #
+  registered: BigInt! #
+  registeredTransactionHash: Bytes! #
   delegations: [Delegation!]! @derivedFrom(field: "operator")
   avsStatuses: [AVSOperatorStatus!]! @derivedFrom(field: "operator")
   actions: [OperatorAction!]! @derivedFrom(field: "operator")
@@ -28,6 +112,45 @@ type Operator @entity{
   metadataURI: String # string
 }
 
+type Delegation @entity{
+  #staker-operator-strategy
+  id: Bytes!  
+  operator: Operator!
+  staker: Staker! # address
+  strategy: Strategy!
+  shares: BigInt! # uint256
+  createdTimestamp: BigInt!
+  createdTransactionHash: Bytes!
+  lastUpdatedTimestamp: BigInt!
+  lastUpdatedTransactionHash: Bytes!
+}
+
+type AVS @entity{
+  id: Bytes!
+  metadataURI: String # string
+  created: BigInt! # uint
+  createdTransactionHash: Bytes!
+  registrationsCount: Int!
+  actionsCount: Int!
+  actions: [AVSAction!]! @derivedFrom(field: "avs")
+  registrations: [AVSOperatorStatus!]! @derivedFrom(field: "avs") 
+}
+
+type AVSOperatorStatus @entity{
+  #avs-operator
+  id: Bytes!
+  avs: AVS!
+  operator: Operator!
+  registeredTransactionHash: Bytes!
+  registeredTimestamp: BigInt!
+  lastUpdatedTimestamp: BigInt!
+  lastUpdatedTransactionHash: Bytes!
+  status: Int! # uint8
+}
+
+
+#ACTIONS
+
 type OperatorAction @entity(immutable:true){
   id: Bytes! #txid
   operator: Operator!
@@ -35,6 +158,14 @@ type OperatorAction @entity(immutable:true){
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+
+  #params
+  earningsReceiver: Bytes # address
+  delegationApprover: Bytes # address
+  stakerOptOutWindowBlocks: BigInt # uint32
+  metadataURI: String # string
+  avs: AVS
+  status: Int # uint8
 }
 
 enum OperatorActionType {
@@ -44,28 +175,6 @@ enum OperatorActionType {
   AVSRegistrationStatusUpdated
 }
 
-type Delegation @entity{
-  #staker-operator-strategy
-  id: ID!  
-  operator: Operator!
-  staker: Staker! # address
-  strategy: Strategy!
-  shares: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type Staker @entity{
-  id: ID!  # address
-  staked: BigInt! #
-  delegated: BigInt! 
-  withdrawing: BigInt! #
-  deposits: [StrategyDeposit!]! @derivedFrom(field: "depositor")
-  delegations: [Delegation!]! @derivedFrom(field: "staker")
-  actions: [StakerAction!]! @derivedFrom(field: "staker")
-}
-
 type StakerAction @entity{
   id: Bytes! #txid
   staker: Staker!
@@ -73,48 +182,49 @@ type StakerAction @entity{
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+
+  #params
+  withdrawal: Withdrawal
+  oldWithdrawal: Withdrawal
+  newWithdrawal: Withdrawal
+  delegatedTo: Operator
+  withdrawer: Bytes
+  nonce: BigInt
+  startBlock: BigInt
+  token: Bytes
+  share: BigInt
+  strategy: Strategy
+  eigonPod: Bytes
 }
 
 enum StakerActionType {
   Delegated
-  ForceUndelegated
   Undelegated
   WithdrawalQueued
   WithdrawalCompleted
+  WithdrawalMigrated
   Deposit
+  PodDeployed  
 }
 
-type Strategy @entity{
-  id: ID!  # address
-  withdrawalDelayBlocks: BigInt # uint256
-  whitelisted: Boolean! #status
-  depositsCount: Int!
-  deposits: [StrategyDeposit!]! @derivedFrom(field: "strategy")
-  name: String!
-  tokenSymbol: String!
-  tokenDecimals: Int! # uint8
-}
-
-type StrategyDeposit @entity{
+type AVSAction @entity(immutable:true){
   id: Bytes! #txid
-  depositor: Staker! # address
-  strategy: Strategy!
-  amount: BigInt! # uint256
-}
-
-type AVS @entity{
-  id: ID!
-  metadataURI: String # string
-  registrations: [AVSOperatorStatus!]! @derivedFrom(field: "avs") 
-}
-
-type AVSOperatorStatus @entity{
-  #avs-operator
-  id: ID!
   avs: AVS!
-  operator: Operator!
-  status: Int! # uint8
+  type: AVSActionType!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  #params
+  operator: Operator
+  metadataURI: String
 }
+
+enum AVSActionType {  
+  MetadataURIUpdated
+  OperatorAdded
+  OperatorRemoved
+}
+
 
 type Initialized @entity(immutable: true) {
   id: Bytes!
@@ -478,6 +588,7 @@ type EigenPodManagerUnpaused @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
 type AVSMetadataURIUpdated @entity(immutable: true) {
   id: Bytes!
   avs: Bytes! # address
@@ -540,6 +651,7 @@ type AVSDirectoryUnpaused @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
 type FrozenStatusReset @entity(immutable: true) {
   id: Bytes!
   previouslySlashedAddress: Bytes! # address

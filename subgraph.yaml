@@ -1,6 +1,6 @@
 specVersion: 1.0.0
 indexerHints:
-  prune: auto
+  prune: 1000
 schema:
   file: ./schema.graphql
 dataSources:
@@ -102,6 +102,9 @@ dataSources:
         - StrategyWhitelisterChanged
         - StrategyManagerUnpaused
         - UpdatedThirdPartyTransfersForbidden
+        - WithdrawalCompleted
+        - WithdrawalQueued
+        - ShareWithdrawalQueued
       abis:
         - name: StrategyManager
           file: ./abis/StrategyManager.json
@@ -129,7 +132,13 @@ dataSources:
         - event: Unpaused(indexed address,uint256)
           handler: handleUnpaused
         - event: UpdatedThirdPartyTransfersForbidden(address,bool)
-          handler: handleUpdatedThirdPartyTransfersForbidden
+          handler: handleUpdatedThirdPartyTransfersForbidden        
+        - event: WithdrawalCompleted(indexed address,uint96,indexed address,bytes32)
+          handler: handleWithdrawalCompleted
+        - event: WithdrawalQueued(address,uint96,address,address,bytes32)
+          handler: handleWithdrawalQueued
+        - event: ShareWithdrawalQueued(address,uint96,address,uint256)
+          handler: handleShareWithdrawalQueued
       file: ./src/strategy-manager.ts
   - kind: ethereum
     name: EigenPodManager

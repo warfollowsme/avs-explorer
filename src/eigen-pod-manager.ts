@@ -1,3 +1,4 @@
+import { Address } from "@graphprotocol/graph-ts"
 import {
   BeaconChainETHDeposited as BeaconChainETHDepositedEvent,
   BeaconChainETHWithdrawalCompleted as BeaconChainETHWithdrawalCompletedEvent,
@@ -22,8 +23,14 @@ import {
   PauserRegistrySet,
   PodDeployed,
   PodSharesUpdated,
+  StakerAction,
   Unpaused,
 } from "../generated/schema"
+import {
+  createOrLoadStaker,
+  createOrLoadStrategyDeposit,
+  createOrLoadStrategy
+} from "./utils/helper"
 
 export function handleBeaconChainETHDeposited(
   event: BeaconChainETHDepositedEvent,
@@ -160,6 +167,19 @@ export function handlePodDeployed(event: PodDeployedEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  let staker = createOrLoadStaker(event.params.podOwner)
+  staker.actionsCount = staker.actionsCount + 1
+  staker.save()
+
+  let action = new StakerAction(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  action.staker = event.params.podOwner
+  action.type = "PodDeployed"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  action.eigonPod = event.params.eigenPod
+  action.save()
 }
 
 export function handlePodSharesUpdated(event: PodSharesUpdatedEvent): void {
@@ -174,6 +194,33 @@ export function handlePodSharesUpdated(event: PodSharesUpdatedEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  let strategyId = changetype<Address>(Address.fromHexString("0xbeaC0eeEeeeeEEeEeEEEEeeEEeEeeeEeeEEBEaC0".toLowerCase()))
+
+  let deposit = createOrLoadStrategyDeposit(event.params.podOwner, strategyId, event.transaction.hash, event.block.timestamp)
+  deposit.shares = deposit.shares.plus(event.params.sharesDelta)
+  deposit.lastUpdatedTimestamp = event.block.timestamp
+  deposit.lastUpdatedTransactionHash = event.transaction.hash
+  deposit.save()
+
+  let strategy = createOrLoadStrategy(strategyId)
+  strategy.totalShares = strategy.totalShares.plus(event.params.sharesDelta)
+  strategy.save()
+
+  let staker = createOrLoadStaker(event.params.podOwner)
+  staker.actionsCount = staker.actionsCount + 1
+  staker.save()
+
+  let action = new StakerAction(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  action.staker = event.params.podOwner
+  action.type = "Deposit"
+  action.blockNumber = event.block.number
+  action.blockTimestamp = event.block.timestamp
+  action.transactionHash = event.transaction.hash
+  //params
+  action.share = event.params.sharesDelta
+  action.strategy = strategyId
+  action.save()
 }
 
 export function handleUnpaused(event: UnpausedEvent): void {
