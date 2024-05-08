@@ -57,24 +57,14 @@ type StrategyDeposit @entity{
   lastUpdatedTransactionHash: Bytes!
 }
 
-# type InternalWithdrawal @entity{
-#   #staker+nounce
-#   id: ID!
-#   staker: Staker!
-#   nonce: BigInt!
-#   strategy: Strategy
-#   shares: BigInt # uint
-#   withdrawal: WithdrawalStrategy
-# }
-
 type Withdrawal @entity {
-  id: Bytes! #root
+  #staker+nounce
+  id: Bytes!
   staker: Staker!
-  root: Bytes
+  nonce: BigInt!
+  root: WithdrawalRoot!
   strategies: [WithdrawalStrategy!]! @derivedFrom(field: "withdrawal")
-  #internalWithdrawal: InternalWithdrawal
-  newWithdrawal: Withdrawal
-  oldWithdrawal: Withdrawal
+  oldRoot: WithdrawalRoot
   queuedBlockNumber: BigInt!
   queuedBlockTimestamp: BigInt!
   queuedTransactionHash: Bytes!
@@ -86,12 +76,16 @@ type Withdrawal @entity {
   migratedTransactionHash: Bytes
 }
 
+type WithdrawalRoot @entity {
+  id: Bytes!
+  withdrawal: Withdrawal!
+}
+
 type WithdrawalStrategy @entity {
-  #staker+nounce
-  id: ID!
+  #staker+nounce+strategy
+  id: Bytes!
   staker: Staker!
-  nonce: BigInt!
-  withdrawal: Withdrawal
+  withdrawal: Withdrawal!
   strategy: Strategy
   share: BigInt
 }
@@ -185,8 +179,8 @@ type StakerAction @entity{
 
   #params
   withdrawal: Withdrawal
-  oldWithdrawal: Withdrawal
-  newWithdrawal: Withdrawal
+  oldWithdrawal: WithdrawalRoot
+  newWithdrawal: WithdrawalRoot
   delegatedTo: Operator
   withdrawer: Bytes
   nonce: BigInt

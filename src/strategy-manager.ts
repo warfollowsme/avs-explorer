@@ -27,6 +27,7 @@ import {
   Unpaused,
   UpdatedThirdPartyTransfersForbidden,
   Withdrawal,
+  WithdrawalRoot,
   WithdrawalStrategy
 } from "../generated/schema"
 import {
@@ -222,59 +223,61 @@ export function handleUpdatedThirdPartyTransfersForbidden(
 export function handleWithdrawalCompleted(
   event: WithdrawalCompletedEvent
 ): void {
-  let withdrawal = Withdrawal.load(event.params.withdrawalRoot)
-  if (withdrawal != null) {
-    withdrawal.completedBlockNumber = event.block.number
-    withdrawal.completedBlockTimestamp = event.block.timestamp
-    withdrawal.completedTransactionHash = event.transaction.hash
-    withdrawal.save()
+  let withdrawalRoot = WithdrawalRoot.load(event.params.withdrawalRoot)
+  if (withdrawalRoot != null) {
+    let withdrawal = Withdrawal.load(withdrawalRoot.withdrawal)
+    if (withdrawal != null) {
+      withdrawal.completedBlockNumber = event.block.number
+      withdrawal.completedBlockTimestamp = event.block.timestamp
+      withdrawal.completedTransactionHash = event.transaction.hash
+      withdrawal.save()
 
-    let strategies = withdrawal.strategies.load()
-    for (let i = 0; i < strategies.length; i++) {
-      let withdrawalStrategy = strategies[i]
-      let share = changetype<BigInt>(withdrawalStrategy.share)
-      let strategyId = changetype<Address>(withdrawalStrategy.strategy)
-      let strategy = createOrLoadStrategy(changetype<Address>(strategyId))
-      strategy.totalWithdrawing = strategy.totalWithdrawing.minus(share)
-      strategy.withdrawalsCount = strategy.withdrawalsCount - 1
-      strategy.save()
+      let strategies = withdrawal.strategies.load()
+      for (let i = 0; i < strategies.length; i++) {
+        let withdrawalStrategy = strategies[i]
+        let share = changetype<BigInt>(withdrawalStrategy.share)
+        let strategyId = changetype<Address>(withdrawalStrategy.strategy)
+        let stakerId = changetype<Address>(withdrawalStrategy.staker)
+        let strategy = createOrLoadStrategy(changetype<Address>(strategyId))
+        strategy.totalWithdrawing = strategy.totalWithdrawing.minus(share)
+        strategy.withdrawalsCount = strategy.withdrawalsCount - 1
+        strategy.save()
+
+        let deposit = createOrLoadStrategyDeposit(stakerId, strategyId, event.transaction.hash, event.block.timestamp)
+        deposit.withdrawal = null
+        deposit.save()
+      }
+
+      let staker = createOrLoadStaker(event.params.depositor)
+      staker.actionsCount = staker.actionsCount + 1
+      staker.save()
+
+      let action = new StakerAction(event.transaction.hash.concatI32(event.logIndex.toI32()))
+      action.staker = event.params.depositor
+      action.type = 'WithdrawalCompleted'
+      action.blockNumber = event.block.number
+      action.blockTimestamp = event.block.timestamp
+      action.transactionHash = event.transaction.hash
+      action.withdrawal = event.params.withdrawalRoot
+      action.save()
     }
-
-
-    let staker = createOrLoadStaker(event.params.depositor)
-    staker.actionsCount = staker.actionsCount + 1
-    staker.save()
-
-    let action = new StakerAction(event.transaction.hash.concatI32(event.logIndex.toI32()))
-    action.staker = event.params.depositor
-    action.type = 'WithdrawalCompleted'
-    action.blockNumber = event.block.number
-    action.blockTimestamp = event.block.timestamp
-    action.transactionHash = event.transaction.hash
-    action.withdrawal = event.params.withdrawalRoot
-    action.save()
   }
 }
 
 export function handleWithdrawalQueued(event: WithdrawalQueuedEvent): void {
-  let withdrawal = new Withdrawal(event.params.withdrawalRoot)
+  let withdrawalId = event.params.depositor.concatI32(event.params.nonce.toI32())
+  let withdrawal = new Withdrawal(withdrawalId)
   withdrawal.staker = event.params.depositor
+  withdrawal.nonce = event.params.nonce
   withdrawal.root = event.params.withdrawalRoot
   withdrawal.queuedBlockNumber = event.block.number
   withdrawal.queuedBlockTimestamp = event.block.timestamp
   withdrawal.queuedTransactionHash = event.transaction.hash
   withdrawal.save()
 
-  let internalId = event.params.depositor.toHexString() + "-" + event.params.nonce.toHexString() + "-0"
-
-  let withdrawalStrategy = WithdrawalStrategy.load(internalId)
-  if (withdrawalStrategy == null) {
-    withdrawalStrategy = new WithdrawalStrategy(internalId)
-    withdrawalStrategy.staker = event.params.depositor
-    withdrawalStrategy.nonce = event.params.nonce
-  }
-  withdrawalStrategy.withdrawal = event.params.withdrawalRoot
-  withdrawalStrategy.save()
+  let withdrawalRoot = new WithdrawalRoot(event.params.withdrawalRoot)
+  withdrawalRoot.withdrawal = withdrawalId
+  withdrawalRoot.save()
 
   let staker = createOrLoadStaker(event.params.depositor)
   staker.actionsCount = staker.actionsCount + 1
@@ -295,19 +298,16 @@ export function handleWithdrawalQueued(event: WithdrawalQueuedEvent): void {
 }
 
 export function handleShareWithdrawalQueued(event: ShareWithdrawalQueuedEvent): void {
-  let internalId = event.params.depositor.toHexString() + "-" + event.params.nonce.toHexString() + "-0"
-  let withdrawalStrategy = WithdrawalStrategy.load(internalId)
-  if (withdrawalStrategy == null) {
-    withdrawalStrategy = new WithdrawalStrategy(internalId)
-    withdrawalStrategy.staker = event.params.depositor
-    withdrawalStrategy.nonce = event.params.nonce
-  }
+  let withdrawalStrategyId = event.params.depositor.concatI32(event.params.nonce.toI32()).concat(event.params.strategy)
+  let withdrawalStrategy = new WithdrawalStrategy(withdrawalStrategyId)
+  withdrawalStrategy.staker = event.params.depositor
   withdrawalStrategy.strategy = event.params.strategy
   withdrawalStrategy.share = event.params.shares
+  withdrawalStrategy.withdrawal = event.params.depositor.concatI32(event.params.nonce.toI32())
   withdrawalStrategy.save()
 
   let deposit = createOrLoadStrategyDeposit(event.params.depositor, event.params.strategy, event.transaction.hash, event.block.timestamp)
-  deposit.withdrawal = internalId
+  deposit.withdrawal = withdrawalStrategyId
   deposit.shares = deposit.shares.minus(event.params.shares)
   deposit.lastUpdatedTimestamp = event.block.timestamp
   deposit.lastUpdatedTransactionHash = event.transaction.hash
